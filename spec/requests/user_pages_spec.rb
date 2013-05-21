@@ -4,6 +4,34 @@ describe "User pages" do
 
     subject { page }
 
+    describe "signin" do
+      before { visit signin_path }
+
+      describe "with invalid information" do
+        before { click_button "Sign in" }
+
+        it { should have_selector('title', text: 'Sign in') }
+        it { should have_selector('div.alert.alert-error', text: 'Invalid') }
+      end
+
+      describe "with valid information" do
+        let(:user) { FactoryGirl.create(:user) }
+        before do
+          fill_in "Email",    with: user.email.upcase
+          fill_in "Password", with: user.password
+          click_button "Sign in"
+        end 
+
+        it { should have_selector('title', text: user.name) }
+        it { should have_link('Sign out') }
+
+        describe "followed by signout" do
+          before { click_link "Sign out" }
+          it { should have_link('Sign in') }
+        end
+      end
+    end
+
     describe "signup page" do
         before { visit signup_path }
 
@@ -41,6 +69,15 @@ describe "User pages" do
 
         it "should create a user" do
           expect { click_button submit }.to change(User, :count).by(1)
+        end
+
+        describe "after saving the user" do
+          before { click_button submit }
+          let(:user) { User.find_by_email('user@example.com') }
+
+          it { should have_selector('title', text: user.name) }
+          it { should have_selector('div.alert.alert-success', text: 'Welcome') }
+          it { should have_link('Sign out') }
         end
       end
     end
